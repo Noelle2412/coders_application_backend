@@ -1,44 +1,29 @@
-// In-memory challenges storage
-export const challenges = [];
+import { ChallengeModel } from "../models/Challenge.js";
 
 export const createChallenge = async (req, res) => {
   try {
-    const { title, category, description, level, code, tests } = req.body;
-    const newChallenge = {
-      id: crypto.randomUUID(),
-      title,
-      category,
-      description,
-      level,
-      code,
-      tests,
-    };
-    challenges.push(newChallenge);
+    const challenge = await ChallengeModel.create(req.body);
     res.status(201).json({
       status: "success",
       message: "Challenge created successfully",
-      data: newChallenge,
+      data: challenge,
     });
   } catch (error) {
     res.status(500).json({
       status: "error",
       message: "An error occurred while creating the challenge",
+      error: error.message,
     });
   }
 };
 
 export const getAllChallenges = async (req, res) => {
   try {
+    const filter = {};
     if (req.query.category) {
-      const filteredChallenges = challenges.filter(
-        (challenge) => challenge.category === req.query.category,
-      );
-      return res.status(200).json({
-        status: "success",
-        message: "Challenges retrieved successfully",
-        data: filteredChallenges,
-      });
+      filter.category = req.query.category;
     }
+    const challenges = await ChallengeModel.find(filter);
     res.status(200).json({
       status: "success",
       message: "Challenges retrieved successfully",
@@ -48,13 +33,14 @@ export const getAllChallenges = async (req, res) => {
     res.status(500).json({
       status: "error",
       message: "An error occurred while retrieving challenges",
+      error: error.message,
     });
   }
 };
 
 export const getChallengeById = async (req, res) => {
   try {
-    const challenge = challenges.find((c) => c.id === req.params.id);
+    const challenge = await ChallengeModel.findById(req.params.id);
     if (!challenge) {
       return res.status(404).json({
         status: "error",
@@ -70,20 +56,22 @@ export const getChallengeById = async (req, res) => {
     res.status(500).json({
       status: "error",
       message: "An error occurred while retrieving the challenge",
+      error: error.message,
     });
   }
 };
 
 export const deleteChallengeById = async (req, res) => {
   try {
-    const challengeIndex = challenges.findIndex((c) => c.id === req.params.id);
-    if (challengeIndex === -1) {
+    const deletedChallenge = await ChallengeModel.findByIdAndDelete(
+      req.params.id,
+    );
+    if (!deletedChallenge) {
       return res.status(404).json({
         status: "error",
         message: "Challenge not found",
       });
     }
-    challenges.splice(challengeIndex, 1);
     res.status(200).json({
       status: "success",
       message: "Challenge deleted successfully",
@@ -92,13 +80,14 @@ export const deleteChallengeById = async (req, res) => {
     res.status(500).json({
       status: "error",
       message: "An error occurred while deleting the challenge",
+      error: error.message,
     });
   }
 };
 
 export const getAllCategories = async (req, res) => {
   try {
-    const categories = [...new Set(challenges.map((c) => c.category))];
+    const categories = await ChallengeModel.distinct("category");
     res.status(200).json({
       status: "success",
       message: "Categories retrieved successfully",
@@ -108,6 +97,7 @@ export const getAllCategories = async (req, res) => {
     res.status(500).json({
       status: "error",
       message: "An error occurred while retrieving categories",
+      error: error.message,
     });
   }
 };
@@ -115,15 +105,14 @@ export const getAllCategories = async (req, res) => {
 export const submitChallenge = async (req, res) => {
   try {
     const { lang, code, challenge_id } = req.body;
-    const challenge = challenges.find((c) => c.id === challenge_id);
+    const challenge = await ChallengeModel.findById(challenge_id);
     if (!challenge) {
       return res.status(404).json({
         status: "error",
         message: "Challenge not found",
       });
     }
-    // Here you would typically run the code against the challenge's tests
-    // For simplicity, we'll just return a success message
+    // Simulation of test execution
     res.status(200).json({
       status: "success",
       message: "Challenge submitted successfully",
@@ -132,6 +121,7 @@ export const submitChallenge = async (req, res) => {
     res.status(500).json({
       status: "error",
       message: "An error occurred while submitting the challenge",
+      error: error.message,
     });
   }
 };

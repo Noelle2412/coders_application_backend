@@ -1,6 +1,8 @@
 import express from "express";
 import dotenv from "dotenv";
 dotenv.config();
+
+import { connectDB } from "./db/db.js";
 import codersRouters from "./routers/codersRouters.js";
 import managersRouters from "./routers/managersRouters.js";
 import challengesRouters from "./routers/challengesRouters.js";
@@ -21,8 +23,16 @@ app.use("/challenges", challengesRouters);
 app.use("/leaderboard", leaderboardRouters);
 app.use("/stats", statsRouters);
 
-app.listen(process.env.PORT, () => {
-  console.log(`Server is running on http://localhost:${process.env.PORT}`);
-});
+const PORT = process.env.PORT;
+
+connectDB()
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`Server is running on http://localhost:${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error("Failed to connect to MongoDB, server not started:", err);
+  });
 
 export default app;

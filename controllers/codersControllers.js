@@ -1,15 +1,13 @@
 import bcrypt from "bcrypt";
-
-// In-memory coders storage
-export const coders = [];
+import { CoderModel } from "../models/Coder.js";
 
 export const codersRegistration = async (req, res) => {
   try {
     const { firstName, lastName, email, password } = req.body;
 
-    const existingCoder = coders.find(
-      (c) => c.email.toLowerCase() === email.toLowerCase(),
-    );
+    const existingCoder = await CoderModel.findOne({
+      email: email.toLowerCase(),
+    });
     if (existingCoder) {
       return res.status(409).json({
         status: "fail",
@@ -20,18 +18,15 @@ export const codersRegistration = async (req, res) => {
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    const newCoder = {
-      id: coders.length + 1,
+    const newCoder = await CoderModel.create({
       firstName,
       lastName,
-      email,
+      email: email.toLowerCase(),
       password: hashedPassword,
-      role: "coder",
-    };
+    });
 
-    coders.push(newCoder);
-
-    const { password: _, ...coderData } = newCoder;
+    const coderData = newCoder.toObject();
+    delete coderData.password;
 
     return res.status(201).json({
       status: "success",
@@ -51,9 +46,9 @@ export const codersLogin = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const coder = coders.find(
-      (c) => c.email.toLowerCase() === email.toLowerCase(),
-    );
+    const coder = await CoderModel.findOne({
+      email: email.toLowerCase(),
+    });
 
     if (!coder) {
       return res.status(401).json({
@@ -70,7 +65,8 @@ export const codersLogin = async (req, res) => {
       });
     }
 
-    const { password: _, ...coderData } = coder;
+    const coderData = coder.toObject();
+    delete coderData.password;
 
     return res.status(200).json({
       status: "success",
@@ -89,17 +85,17 @@ export const codersLogin = async (req, res) => {
 export const getCoderById = async (req, res) => {
   try {
     const { id } = req.params;
-    const coder = coders.find((c) => c.id === parseInt(id));
+    const coder = await CoderModel.findById(id).select("-password");
     if (!coder) {
       return res.status(404).json({
         status: "fail",
         message: "Coder not found",
       });
     }
-    const { password: _, ...coderData } = coder;
+
     return res.status(200).json({
       status: "success",
-      data: coderData,
+      data: coder,
     });
   } catch (error) {
     return res.status(500).json({
@@ -113,26 +109,30 @@ export const getCoderById = async (req, res) => {
 export const updateCoderById = async (req, res) => {
   try {
     const { id } = req.params;
-    const coderIndex = coders.findIndex((c) => c.id === parseInt(id));
-    if (coderIndex === -1) {
+    const { about, firstName, lastName } = req.body;
+
+    const updateFields = {};
+    if (about !== undefined) updateFields.description = about;
+    if (firstName !== undefined) updateFields.firstName = firstName;
+    if (lastName !== undefined) updateFields.lastName = lastName;
+
+    const updatedCoder = await CoderModel.findByIdAndUpdate(
+      id,
+      { $set: updateFields },
+      { new: true, runValidators: true },
+    ).select("-password");
+
+    if (!updatedCoder) {
       return res.status(404).json({
         status: "fail",
         message: "Coder not found",
       });
     }
-    const { about, firstName, lastName } = req.body;
-    const updatedCoder = {
-      ...coders[coderIndex],
-      about,
-      firstName,
-      lastName,
-    };
-    coders[coderIndex] = updatedCoder;
-    const { password: _, ...coderData } = updatedCoder;
+
     return res.status(200).json({
       status: "success",
       message: "Coder updated successfully",
-      data: coderData,
+      data: updatedCoder,
     });
   } catch (error) {
     return res.status(500).json({
@@ -146,14 +146,14 @@ export const updateCoderById = async (req, res) => {
 export const deleteCoderById = async (req, res) => {
   try {
     const { id } = req.params;
-    const coderIndex = coders.findIndex((c) => c.id === parseInt(id));
-    if (coderIndex === -1) {
+    const deletedCoder = await CoderModel.findByIdAndDelete(id);
+    if (!deletedCoder) {
       return res.status(404).json({
         status: "fail",
         message: "Coder not found",
       });
     }
-    coders.splice(coderIndex, 1);
+
     return res.status(200).json({
       status: "success",
       message: "Coder deleted successfully",

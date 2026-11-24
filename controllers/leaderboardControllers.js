@@ -1,16 +1,17 @@
-const fetchLeaderboardData = async () => {
-  // Simulate fetching leaderboard data from a database or external API
-  return [
-    { id: 1, name: "Alice", score: 100 },
-    { id: 2, name: "Bob", score: 90 },
-    { id: 3, name: "Charlie", score: 80 },
-  ];
-};
+import { CoderModel } from "../models/Coder.js";
 
 export const getLeaderboard = async (req, res) => {
   try {
-    // Assuming you have a function to fetch leaderboard data
-    const leaderboardData = await fetchLeaderboardData();
+    const coders = await CoderModel.find()
+      .select("firstName lastName score")
+      .sort({ score: -1 });
+
+    const leaderboardData = coders.map((coder) => ({
+      id: coder._id,
+      name: `${coder.firstName} ${coder.lastName}`.trim(),
+      score: coder.score || 0,
+    }));
+
     res.status(200).json({
       status: "success",
       message: "Leaderboard retrieved successfully",
@@ -20,19 +21,26 @@ export const getLeaderboard = async (req, res) => {
     res.status(500).json({
       status: "error",
       message: "An error occurred while retrieving the leaderboard",
+      error: error.message,
     });
   }
 };
 
 export const getTopCoders = async (req, res) => {
   try {
-    // Assuming you have a function to fetch leaderboard data
-    const leaderboardData = await fetchLeaderboardData();
-    // Sort the data by score in descending order and take the top K
-    const K = req.query.K ? parseInt(req.query.K, 10) : 3; // Default to top 3 if K is not provided
-    const topCoders = leaderboardData
-      .sort((a, b) => b.score - a.score)
-      .slice(0, K);
+    const K = req.query.K ? parseInt(req.query.K, 10) : 3;
+
+    const coders = await CoderModel.find()
+      .select("firstName lastName score")
+      .sort({ score: -1 })
+      .limit(K);
+
+    const topCoders = coders.map((coder) => ({
+      id: coder._id,
+      name: `${coder.firstName} ${coder.lastName}`.trim(),
+      score: coder.score || 0,
+    }));
+
     res.status(200).json({
       status: "success",
       message: "Top coders retrieved successfully",
@@ -42,6 +50,7 @@ export const getTopCoders = async (req, res) => {
     res.status(500).json({
       status: "error",
       message: "An error occurred while retrieving the top coders",
+      error: error.message,
     });
   }
 };

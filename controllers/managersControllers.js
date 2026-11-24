@@ -1,28 +1,33 @@
-// In-memory managers storage
-export const managers = [];
+import bcrypt from "bcrypt";
+import { ManagerModel } from "../models/Manager.js";
 
 export const managersRegistration = async (req, res) => {
   try {
     const { firstName, lastName, email, password } = req.body;
-    const existingManager = managers.find(
-      (m) => m.email.toLowerCase() === email.toLowerCase(),
-    );
+
+    const existingManager = await ManagerModel.findOne({
+      email: email.toLowerCase(),
+    });
     if (existingManager) {
       return res.status(409).json({
         status: "fail",
         message: "Manager with this email already exists",
       });
     }
-    const newManager = {
-      id: managers.length + 1,
+
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    const newManager = await ManagerModel.create({
       firstName,
       lastName,
-      email,
-      password,
-      role: "manager",
-    };
-    managers.push(newManager);
-    const { password: _, ...managerData } = newManager;
+      email: email.toLowerCase(),
+      password: hashedPassword,
+    });
+
+    const managerData = newManager.toObject();
+    delete managerData.password;
+
     return res.status(201).json({
       status: "success",
       message: "Manager registered successfully",
@@ -40,16 +45,29 @@ export const managersRegistration = async (req, res) => {
 export const managersLogin = async (req, res) => {
   try {
     const { email, password } = req.body;
-    const manager = managers.find(
-      (m) => m.email.toLowerCase() === email.toLowerCase(),
-    );
-    if (!manager || manager.password !== password) {
+
+    const manager = await ManagerModel.findOne({
+      email: email.toLowerCase(),
+    });
+
+    if (!manager) {
       return res.status(401).json({
         status: "fail",
         message: "Invalid email or password",
       });
     }
-    const { password: _, ...managerData } = manager;
+
+    const isMatch = await bcrypt.compare(password, manager.password);
+    if (!isMatch) {
+      return res.status(401).json({
+        status: "fail",
+        message: "Invalid email or password",
+      });
+    }
+
+    const managerData = manager.toObject();
+    delete managerData.password;
+
     return res.status(200).json({
       status: "success",
       message: "Manager logged in successfully",
@@ -67,17 +85,17 @@ export const managersLogin = async (req, res) => {
 export const getManagerById = async (req, res) => {
   try {
     const { id } = req.params;
-    const manager = managers.find((m) => m.id === parseInt(id));
+    const manager = await ManagerModel.findById(id).select("-password");
     if (!manager) {
       return res.status(404).json({
         status: "fail",
         message: "Manager not found",
       });
     }
-    const { password: _, ...managerData } = manager;
+
     return res.status(200).json({
       status: "success",
-      data: managerData,
+      data: manager,
     });
   } catch (error) {
     return res.status(500).json({
@@ -91,26 +109,30 @@ export const getManagerById = async (req, res) => {
 export const updateManagerById = async (req, res) => {
   try {
     const { id } = req.params;
-    const managerIndex = managers.findIndex((m) => m.id === parseInt(id));
-    if (managerIndex === -1) {
+    const { about, firstName, lastName } = req.body;
+
+    const updateFields = {};
+    if (about !== undefined) updateFields.description = about;
+    if (firstName !== undefined) updateFields.firstName = firstName;
+    if (lastName !== undefined) updateFields.lastName = lastName;
+
+    const updatedManager = await ManagerModel.findByIdAndUpdate(
+      id,
+      { $set: updateFields },
+      { new: true, runValidators: true },
+    ).select("-password");
+
+    if (!updatedManager) {
       return res.status(404).json({
         status: "fail",
         message: "Manager not found",
       });
     }
-    const { about, firstName, lastName } = req.body;
-    const updatedManager = {
-      ...managers[managerIndex],
-      about,
-      firstName,
-      lastName,
-    };
-    managers[managerIndex] = updatedManager;
-    const { password: _, ...managerData } = updatedManager;
+
     return res.status(200).json({
       status: "success",
       message: "Manager updated successfully",
-      data: managerData,
+      data: updatedManager,
     });
   } catch (error) {
     return res.status(500).json({
@@ -124,14 +146,14 @@ export const updateManagerById = async (req, res) => {
 export const deleteManagerById = async (req, res) => {
   try {
     const { id } = req.params;
-    const managerIndex = managers.findIndex((m) => m.id === parseInt(id));
-    if (managerIndex === -1) {
+    const deletedManager = await ManagerModel.findByIdAndDelete(id);
+    if (!deletedManager) {
       return res.status(404).json({
         status: "fail",
         message: "Manager not found",
       });
     }
-    managers.splice(managerIndex, 1);
+
     return res.status(200).json({
       status: "success",
       message: "Manager deleted successfully",
