@@ -1,4 +1,5 @@
 import Joi from "joi";
+import { validate } from "./validate.js";
 
 export const challengeSchema = Joi.object({
   title: Joi.string().trim().min(3).max(100).required().messages({
@@ -7,36 +8,40 @@ export const challengeSchema = Joi.object({
   category: Joi.string().trim().min(3).max(50).required().messages({
     "string.empty": "Category is required",
   }),
-  description: Joi.string().trim().min(0).max(1000),
+  description: Joi.string().trim().min(0).max(100000),
   level: Joi.string().valid("Easy", "Moderate", "Hard").required().messages({
     "any.only": "Level must be either 'Easy', 'Moderate', or 'Hard'",
   }),
-  code: {
+  code: Joi.object({
     function_name: Joi.string().trim().min(1).max(100).required(),
     code_text: Joi.array()
-      .items(Joi.string().trim().min(1).max(10000))
+      .length(2)
+      .items(
+        Joi.object({
+          language: Joi.string().valid("py", "js").required(),
+          text: Joi.string().trim().min(1).max(10000).required(),
+        }),
+      )
       .required(),
-    inputs: Joi.array().items(Joi.string().trim().min(0).max(1000)).required(),
-  },
-  tests: Joi.array(),
+    inputs: Joi.array()
+      .items(
+        Joi.object({
+          name: Joi.string().trim().min(1).max(100).required(),
+          type: Joi.string().trim().min(1).max(50).required(),
+        }),
+      )
+      .required(),
+  }).required(),
+  tests: Joi.array()
+    .items(
+      Joi.object({
+        input: Joi.any().required(),
+        expected_output: Joi.any().required(),
+      }),
+    )
+    .min(1)
+    .required(),
 });
-
-export const validateChallenge = (req, res, next) => {
-  const { error, value } = challengeSchema.validate(req.body, {
-    abortEarly: false,
-    stripUnknown: true,
-  });
-  if (error) {
-    const errorMessages = error.details.map((detail) => detail.message);
-    return res.status(400).json({
-      status: "fail",
-      message: "Validation failed",
-      errors: errorMessages,
-    });
-  }
-  req.body = value;
-  next();
-};
 
 export const challengeSubmissionSchema = Joi.object({
   lang: Joi.string().valid("py", "js").required().messages({
@@ -45,24 +50,10 @@ export const challengeSubmissionSchema = Joi.object({
   code: Joi.string().trim().min(1).max(10000).required().messages({
     "string.empty": "Code is required",
   }),
-  challengeId: Joi.string().trim().min(1).max(100).required().messages({
+  challenge_id: Joi.string().trim().min(1).max(100).required().messages({
     "string.empty": "Challenge ID is required",
   }),
 });
 
-export const validateChallengeSubmission = (req, res, next) => {
-  const { error, value } = challengeSubmissionSchema.validate(req.body, {
-    abortEarly: false,
-    stripUnknown: true,
-  });
-  if (error) {
-    const errorMessages = error.details.map((detail) => detail.message);
-    return res.status(400).json({
-      status: "fail",
-      message: "Validation failed",
-      errors: errorMessages,
-    });
-  }
-  req.body = value;
-  next();
-};
+export const validateChallenge = validate(challengeSchema);
+export const validateChallengeSubmission = validate(challengeSubmissionSchema);

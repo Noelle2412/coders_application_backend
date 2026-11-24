@@ -19,6 +19,6 @@ router.get("/", getAllChallenges);
 router.get("/categories", getAllCategories);
 router.get("/:id", getChallengeById);
 router.delete("/:id", deleteChallengeById);
-router.post("/:id/submit", validateChallengeSubmission, submitChallenge);
+router.post("/:id/submission", validateChallengeSubmission, submitChallenge);
 
 export default router;

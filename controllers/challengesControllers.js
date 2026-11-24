@@ -5,6 +5,7 @@ export const createChallenge = async (req, res) => {
   try {
     const { title, category, description, level, code, tests } = req.body;
     const newChallenge = {
+      id: crypto.randomUUID(),
       title,
       category,
       description,
@@ -113,8 +114,8 @@ export const getAllCategories = async (req, res) => {
 
 export const submitChallenge = async (req, res) => {
   try {
-    const { lang, code, challengeId } = req.body;
-    const challenge = challenges.find((c) => c.id === challengeId);
+    const { lang, code, challenge_id } = req.body;
+    const challenge = challenges.find((c) => c.id === challenge_id);
     if (!challenge) {
       return res.status(404).json({
         status: "error",

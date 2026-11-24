@@ -1,4 +1,5 @@
 import Joi from "joi";
+import { validate } from "./validate.js";
 
 export const registrationSchema = Joi.object({
   firstName: Joi.string().trim().min(2).max(100).required().messages({
@@ -34,40 +35,20 @@ export const loginSchema = Joi.object({
   }),
 });
 
-export const validateRegistration = (req, res, next) => {
-  const { error, value } = registrationSchema.validate(req.body, {
-    abortEarly: false,
-    stripUnknown: true,
-  });
+export const updateProfileSchema = Joi.object({
+  firstName: Joi.string().trim().min(2).max(100).optional().messages({
+    "string.empty": "First name cannot be empty",
+    "string.min": "First name must be at least 2 characters long",
+  }),
+  lastName: Joi.string().trim().min(2).max(100).optional().messages({
+    "string.empty": "Last name cannot be empty",
+    "string.min": "Last name must be at least 2 characters long",
+  }),
+  about: Joi.string().trim().max(1000).allow("").optional().messages({
+    "string.max": "About section cannot exceed 1000 characters",
+  }),
+});
 
-  if (error) {
-    const errorMessages = error.details.map((detail) => detail.message);
-    return res.status(400).json({
-      status: "fail",
-      message: "Validation failed",
-      errors: errorMessages,
-    });
-  }
-
-  req.body = value;
-  next();
-};
-
-export const validateLogin = (req, res, next) => {
-  const { error, value } = loginSchema.validate(req.body, {
-    abortEarly: false,
-    stripUnknown: true,
-  });
-
-  if (error) {
-    const errorMessages = error.details.map((detail) => detail.message);
-    return res.status(400).json({
-      status: "fail",
-      message: "Validation failed",
-      errors: errorMessages,
-    });
-  }
-
-  req.body = value;
-  next();
-};
+export const validateRegistration = validate(registrationSchema);
+export const validateLogin = validate(loginSchema);
+export const validateUpdateProfile = validate(updateProfileSchema);

@@ -29,7 +29,7 @@ export const getTopCoders = async (req, res) => {
     // Assuming you have a function to fetch leaderboard data
     const leaderboardData = await fetchLeaderboardData();
     // Sort the data by score in descending order and take the top K
-    const K = req.query.K ? parseInt(req.query.K) : 3; // Default to top 3 if K is not provided
+    const K = req.query.K ? parseInt(req.query.K, 10) : 3; // Default to top 3 if K is not provided
     const topCoders = leaderboardData
       .sort((a, b) => b.score - a.score)
       .slice(0, K);

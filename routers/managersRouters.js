@@ -9,6 +9,7 @@ import {
 import {
   validateRegistration,
   validateLogin,
+  validateUpdateProfile,
 } from "../middlewares/authValidator.js";
 
 const router = Router();
@@ -19,7 +20,7 @@ router.post("/login", validateLogin, managersLogin);
 
 router.get("/:id", getManagerById);
 
-router.patch("/:id", updateManagerById);
+router.patch("/:id", validateUpdateProfile, updateManagerById);
 
 router.delete("/:id", deleteManagerById);
 

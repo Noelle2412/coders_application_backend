@@ -100,10 +100,10 @@ export const updateManagerById = async (req, res) => {
     }
     const { about, firstName, lastName } = req.body;
     const updatedManager = {
+      ...managers[managerIndex],
       about,
       firstName,
       lastName,
-      ...managers[managerIndex],
     };
     managers[managerIndex] = updatedManager;
     const { password: _, ...managerData } = updatedManager;

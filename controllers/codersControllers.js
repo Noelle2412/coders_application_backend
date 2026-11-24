@@ -1,3 +1,5 @@
+import bcrypt from "bcrypt";
+
 // In-memory coders storage
 export const coders = [];
 
@@ -15,12 +17,15 @@ export const codersRegistration = async (req, res) => {
       });
     }
 
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
     const newCoder = {
       id: coders.length + 1,
       firstName,
       lastName,
       email,
-      password,
+      password: hashedPassword,
       role: "coder",
     };
 
@@ -50,7 +55,15 @@ export const codersLogin = async (req, res) => {
       (c) => c.email.toLowerCase() === email.toLowerCase(),
     );
 
-    if (!coder || coder.password !== password) {
+    if (!coder) {
+      return res.status(401).json({
+        status: "fail",
+        message: "Invalid email or password",
+      });
+    }
+
+    const isMatch = await bcrypt.compare(password, coder.password);
+    if (!isMatch) {
       return res.status(401).json({
         status: "fail",
         message: "Invalid email or password",
@@ -109,10 +122,10 @@ export const updateCoderById = async (req, res) => {
     }
     const { about, firstName, lastName } = req.body;
     const updatedCoder = {
+      ...coders[coderIndex],
       about,
       firstName,
       lastName,
-      ...coders[coderIndex],
     };
     coders[coderIndex] = updatedCoder;
     const { password: _, ...coderData } = updatedCoder;
