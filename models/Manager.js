@@ -9,23 +9,30 @@ const ManagerSchema = new Schema(
       type: Schema.Types.String,
       required: true,
       unique: true,
+      lowercase: true,
+      trim: true,
     },
     password: {
       type: Schema.Types.String,
-      required: function () {
-        return this.provider === "local";
-      },
+      required: true,
     },
     lastName: {
       type: Schema.Types.String,
       required: true,
+      trim: true,
     },
     firstName: {
       type: Schema.Types.String,
       required: true,
+      trim: true,
     },
     avatar: {
       type: Schema.Types.String,
+      default: "",
+    },
+    about: {
+      type: Schema.Types.String,
+      default: "",
     },
   },
   {

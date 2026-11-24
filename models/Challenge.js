@@ -3,71 +3,129 @@ import { model, Schema } from "mongoose";
 const DOCUMENT_NAME = "Challenge";
 const COLLECTION_NAME = "challenges";
 
-const FunctionInputDefinitionSchema = new Schema({
-  name: {
-    type: String,
+const CodeTextSchema = new Schema(
+  {
+    language: {
+      type: String,
+      enum: ["py", "js"],
+      required: true,
+    },
+    text: {
+      type: String,
+      required: true,
+    },
   },
-  type: {
-    type: String,
-  },
-});
+  { _id: false },
+);
 
-const CodeSchema = new Schema({
-  codeContent: {
-    type: String,
+const InputSchema = new Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+    },
+    type: {
+      type: String,
+      required: true,
+    },
   },
-  functionName: {
-    type: String,
-  },
-  functionInputDefinition: {
-    type: FunctionInputDefinitionSchema,
-  },
-});
+  { _id: false },
+);
 
-const FunctionInputValueSchema = new Schema({
-  name: {
-    type: String,
+const CodeSchema = new Schema(
+  {
+    function_name: {
+      type: String,
+      required: true,
+    },
+    code_text: {
+      type: [CodeTextSchema],
+      required: true,
+      validate: {
+        validator: function (v) {
+          return Array.isArray(v) && v.length === 2;
+        },
+        message: "code_text must contain exactly 2 items (py and js).",
+      },
+    },
+    inputs: {
+      type: [InputSchema],
+      required: true,
+    },
   },
-  value: {
-    type: Schema.Types.Mixed,
-  },
-});
+  { _id: false },
+);
 
-const TestCaseSchema = new Schema({
-  weight: {
-    type: Number,
+const TestInputSchema = new Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    value: {
+      type: Schema.Types.Mixed,
+      required: true,
+    },
   },
-  functionInputValues: {
-    type: [FunctionInputValueSchema],
+  { _id: false },
+);
+
+const TestSchema = new Schema(
+  {
+    inputs: {
+      type: [TestInputSchema],
+      required: true,
+      validate: {
+        validator: function (v) {
+          return Array.isArray(v) && v.length >= 1;
+        },
+        message: "Test case must contain at least 1 input.",
+      },
+    },
+    output: {
+      type: Schema.Types.Mixed,
+      required: true,
+    },
   },
-});
+  { _id: false },
+);
 
 const ChallengeSchema = new Schema(
   {
+    title: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    category: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    description: {
+      type: String,
+      default: "",
+      trim: true,
+    },
     level: {
       type: String,
       enum: ["Easy", "Moderate", "Hard"],
       required: true,
     },
-    category: {
-      type: String,
-      default: "",
-    },
-    title: {
-      type: String,
-      default: "",
-    },
-    description: {
-      type: String,
-      default: "",
-    },
     code: {
       type: CodeSchema,
       required: true,
     },
-    testCases: {
-      type: [TestCaseSchema],
+    tests: {
+      type: [TestSchema],
       required: true,
+      validate: {
+        validator: function (v) {
+          return Array.isArray(v) && v.length >= 1;
+        },
+        message: "tests must contain at least 1 test case.",
+      },
     },
   },
   {

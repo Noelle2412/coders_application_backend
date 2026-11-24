@@ -109,12 +109,13 @@ export const getCoderById = async (req, res) => {
 export const updateCoderById = async (req, res) => {
   try {
     const { id } = req.params;
-    const { about, firstName, lastName } = req.body;
+    const { about, firstName, lastName, avatar } = req.body;
 
     const updateFields = {};
-    if (about !== undefined) updateFields.description = about;
+    if (about !== undefined) updateFields.about = about;
     if (firstName !== undefined) updateFields.firstName = firstName;
     if (lastName !== undefined) updateFields.lastName = lastName;
+    if (avatar !== undefined) updateFields.avatar = avatar;
 
     const updatedCoder = await CoderModel.findByIdAndUpdate(
       id,

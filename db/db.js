@@ -11,7 +11,7 @@ export async function connectDB() {
     await mongoose.connect(URI, {
       serverSelectionTimeoutMS: 10000,
     });
-    console.log("Successfully connected to DanceGrid MongoDB!");
+    console.log("Successfully connected to Coders Application Database!");
   } catch (error) {
     console.error("MongoDB connection failed:", error.message);
     throw error;

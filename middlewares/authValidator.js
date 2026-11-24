@@ -47,7 +47,18 @@ export const updateProfileSchema = Joi.object({
   about: Joi.string().trim().max(1000).allow("").optional().messages({
     "string.max": "About section cannot exceed 1000 characters",
   }),
-});
+  avatar: Joi.alternatives()
+    .try(
+      Joi.string().uri(),
+      Joi.string().trim().length(2),
+      Joi.string().trim().valid(""),
+    )
+    .optional()
+    .messages({
+      "alternatives.match":
+        "Avatar must be a valid URL, a 2-letter initials string, or empty",
+    }),
+}).min(1);
 
 export const validateRegistration = validate(registrationSchema);
 export const validateLogin = validate(loginSchema);
