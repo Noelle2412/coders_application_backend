@@ -1,5 +1,9 @@
 import bcrypt from "bcrypt";
 import { ManagerModel } from "../models/Manager.js";
+import {
+  generateVerificationToken,
+  sendVerificationEmail,
+} from "../utils/emailService.js";
 
 export const managersRegistration = async (req, res) => {
   try {
@@ -23,14 +27,29 @@ export const managersRegistration = async (req, res) => {
       lastName,
       email: email.toLowerCase(),
       password: hashedPassword,
+      is_verified: false,
     });
+
+    const token = generateVerificationToken(newManager, "Manager");
+
+    // Send verification email
+    try {
+      await sendVerificationEmail({
+        to: newManager.email,
+        firstName: newManager.firstName,
+        token,
+      });
+    } catch (emailErr) {
+      console.error("Failed to send verification email:", emailErr.message);
+    }
 
     const managerData = newManager.toObject();
     delete managerData.password;
 
     return res.status(201).json({
       status: "success",
-      message: "Manager registered successfully",
+      message:
+        "Manager registered successfully. A verification email has been sent to your email address.",
       data: managerData,
     });
   } catch (error) {

@@ -1,5 +1,9 @@
 import bcrypt from "bcrypt";
 import { CoderModel } from "../models/Coder.js";
+import {
+  generateVerificationToken,
+  sendVerificationEmail,
+} from "../utils/emailService.js";
 
 export const codersRegistration = async (req, res) => {
   try {
@@ -23,14 +27,29 @@ export const codersRegistration = async (req, res) => {
       lastName,
       email: email.toLowerCase(),
       password: hashedPassword,
+      is_verified: false,
     });
+
+    const token = generateVerificationToken(newCoder, "Coder");
+
+    // Send verification email
+    try {
+      await sendVerificationEmail({
+        to: newCoder.email,
+        firstName: newCoder.firstName,
+        token,
+      });
+    } catch (emailErr) {
+      console.error("Failed to send verification email:", emailErr.message);
+    }
 
     const coderData = newCoder.toObject();
     delete coderData.password;
 
     return res.status(201).json({
       status: "success",
-      message: "Coder registered successfully",
+      message:
+        "Coder registered successfully. A verification email has been sent to your email address.",
       data: coderData,
     });
   } catch (error) {

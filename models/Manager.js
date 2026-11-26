@@ -34,6 +34,10 @@ const ManagerSchema = new Schema(
       type: Schema.Types.String,
       default: "",
     },
+    is_verified: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,
