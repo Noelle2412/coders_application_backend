@@ -101,7 +101,7 @@ const ChallengeSchema = new Schema(
       required: true,
       trim: true,
     },
-    manager: { type: ObjectId, ref: "Manager" },
+    manager: { type: Schema.Types.ObjectId, ref: "Manager" },
     category: {
       type: String,
       required: true,

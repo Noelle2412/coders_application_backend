@@ -1,7 +1,7 @@
 import bcrypt from "bcrypt";
-import { CoderModel } from "./models/Coder.js";
-import { ManagerModel } from "./models/Manager.js";
-import { ChallengeModel } from "./models/Challenge.js";
+import { CoderModel } from "../models/Coder.js";
+import { ManagerModel } from "../models/Manager.js";
+import { ChallengeModel } from "../models/Challenge.js";
 
 export const seedDatabase = async () => {
   try {
