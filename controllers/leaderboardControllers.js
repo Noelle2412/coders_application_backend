@@ -1,16 +1,8 @@
-import { CoderModel } from "../models/Coder.js";
+import { getLeaderboardService } from "../services/leaderboardService.js";
 
 export const getLeaderboard = async (req, res) => {
   try {
-    const coders = await CoderModel.find()
-      .select("firstName lastName score")
-      .sort({ score: -1 });
-
-    const leaderboardData = coders.map((coder) => ({
-      id: coder._id,
-      name: `${coder.firstName} ${coder.lastName}`.trim(),
-      score: coder.score || 0,
-    }));
+    const leaderboardData = await getLeaderboardService();
 
     res.status(200).json({
       status: "success",
@@ -30,16 +22,7 @@ export const getTopCoders = async (req, res) => {
   try {
     const K = req.query.K ? parseInt(req.query.K, 10) : 3;
 
-    const coders = await CoderModel.find()
-      .select("firstName lastName score")
-      .sort({ score: -1 })
-      .limit(K);
-
-    const topCoders = coders.map((coder) => ({
-      id: coder._id,
-      name: `${coder.firstName} ${coder.lastName}`.trim(),
-      score: coder.score || 0,
-    }));
+    const topCoders = await getLeaderboardService(K);
 
     res.status(200).json({
       status: "success",
@@ -47,6 +30,13 @@ export const getTopCoders = async (req, res) => {
       data: topCoders,
     });
   } catch (error) {
+    res.status(500).json({
+      status: "error",
+      message: "An error occurred while retrieving the top coders",
+      error: error.message,
+    });
+  }
+};
     res.status(500).json({
       status: "error",
       message: "An error occurred while retrieving the top coders",

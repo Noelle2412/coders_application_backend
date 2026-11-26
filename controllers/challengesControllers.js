@@ -5,6 +5,7 @@ import {
   getChallengeByIdService,
   getAllCategoriesService,
 } from "../services/challengesService.js";
+import { gradeSubmissionService } from "../services/gradingService.js";
 
 export const createChallenge = async (req, res) => {
   try {
@@ -112,16 +113,6 @@ export const submitChallenge = async (req, res) => {
   try {
     const challengeId = req.params.id || req.body.challenge_id;
     const { lang, code } = req.body;
-
-    const challenge = await ChallengeModel.findById(challengeId);
-    if (!challenge) {
-      return res.status(404).json({
-        status: "error",
-        message: "Challenge not found",
-      });
-    }
-
-    // Get coder id from authenticated user (req.user is injected by authMiddleware)
     const coderId = req.user?.id || req.body.coder_id;
 
     if (!coderId) {
@@ -131,27 +122,29 @@ export const submitChallenge = async (req, res) => {
       });
     }
 
-    // Create and save submission record
-    const submission = await SubmissionModel.create({
-      coder: coderId,
-      challenge: challenge._id,
+    const result = await gradeSubmissionService({
+      coderId,
+      challengeId,
+      lang,
       code,
-      language: lang,
-      passed: true, // Simulation of test execution
-      score: 100,
-      submittedAt: new Date(),
     });
 
-    res.status(201).json({
+    return res.status(200).json({
       status: "success",
-      message: "Challenge submitted successfully",
-      data: submission,
+      message: result.passed
+        ? "Challenge passed successfully!"
+        : "Challenge evaluation completed. Some tests failed.",
+      data: {
+        submission: result.submission,
+        runner_results: result.runnerResponse,
+        passed: result.passed,
+        score: result.score,
+      },
     });
   } catch (error) {
-    res.status(500).json({
+    return res.status(error.statusCode || 500).json({
       status: "error",
-      message: "An error occurred while submitting the challenge",
-      error: error.message,
+      message: error.message || "An error occurred while submitting the challenge",
     });
   }
 };

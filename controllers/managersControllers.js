@@ -113,11 +113,16 @@ export const managersLogin = async (req, res) => {
   }
 };
 
+import {
+  getUserProfileService,
+  updateUserProfileService,
+} from "../services/profileService.js";
+
 export const getManagerById = async (req, res) => {
   try {
     const { id } = req.params;
-    const manager = await ManagerModel.findById(id).select("-password");
-    if (!manager) {
+    const result = await getUserProfileService(id, req.user);
+    if (!result || result.type !== "manager") {
       return res.status(404).json({
         status: "fail",
         message: "Manager not found",
@@ -126,7 +131,7 @@ export const getManagerById = async (req, res) => {
 
     return res.status(200).json({
       status: "success",
-      data: manager,
+      data: result.profile,
     });
   } catch (error) {
     return res.status(500).json({
@@ -140,21 +145,9 @@ export const getManagerById = async (req, res) => {
 export const updateManagerById = async (req, res) => {
   try {
     const { id } = req.params;
-    const { about, firstName, lastName, avatar } = req.body;
+    const result = await updateUserProfileService(id, req.body, req.user);
 
-    const updateFields = {};
-    if (about !== undefined) updateFields.about = about;
-    if (firstName !== undefined) updateFields.firstName = firstName;
-    if (lastName !== undefined) updateFields.lastName = lastName;
-    if (avatar !== undefined) updateFields.avatar = avatar;
-
-    const updatedManager = await ManagerModel.findByIdAndUpdate(
-      id,
-      { $set: updateFields },
-      { new: true, runValidators: true },
-    ).select("-password");
-
-    if (!updatedManager) {
+    if (!result || result.type !== "manager") {
       return res.status(404).json({
         status: "fail",
         message: "Manager not found",
@@ -164,13 +157,12 @@ export const updateManagerById = async (req, res) => {
     return res.status(200).json({
       status: "success",
       message: "Manager updated successfully",
-      data: updatedManager,
+      data: result.profile,
     });
   } catch (error) {
-    return res.status(500).json({
+    return res.status(error.statusCode || 500).json({
       status: "error",
-      message: "An error occurred while updating the manager",
-      error: error.message,
+      message: error.message || "An error occurred while updating the manager",
     });
   }
 };

@@ -113,11 +113,16 @@ export const codersLogin = async (req, res) => {
   }
 };
 
+import {
+  getUserProfileService,
+  updateUserProfileService,
+} from "../services/profileService.js";
+
 export const getCoderById = async (req, res) => {
   try {
     const { id } = req.params;
-    const coder = await CoderModel.findById(id).select("-password");
-    if (!coder) {
+    const result = await getUserProfileService(id, req.user);
+    if (!result || result.type !== "coder") {
       return res.status(404).json({
         status: "fail",
         message: "Coder not found",
@@ -126,7 +131,7 @@ export const getCoderById = async (req, res) => {
 
     return res.status(200).json({
       status: "success",
-      data: coder,
+      data: result.profile,
     });
   } catch (error) {
     return res.status(500).json({
@@ -140,21 +145,9 @@ export const getCoderById = async (req, res) => {
 export const updateCoderById = async (req, res) => {
   try {
     const { id } = req.params;
-    const { about, firstName, lastName, avatar } = req.body;
+    const result = await updateUserProfileService(id, req.body, req.user);
 
-    const updateFields = {};
-    if (about !== undefined) updateFields.about = about;
-    if (firstName !== undefined) updateFields.firstName = firstName;
-    if (lastName !== undefined) updateFields.lastName = lastName;
-    if (avatar !== undefined) updateFields.avatar = avatar;
-
-    const updatedCoder = await CoderModel.findByIdAndUpdate(
-      id,
-      { $set: updateFields },
-      { new: true, runValidators: true },
-    ).select("-password");
-
-    if (!updatedCoder) {
+    if (!result || result.type !== "coder") {
       return res.status(404).json({
         status: "fail",
         message: "Coder not found",
@@ -164,13 +157,12 @@ export const updateCoderById = async (req, res) => {
     return res.status(200).json({
       status: "success",
       message: "Coder updated successfully",
-      data: updatedCoder,
+      data: result.profile,
     });
   } catch (error) {
-    return res.status(500).json({
+    return res.status(error.statusCode || 500).json({
       status: "error",
-      message: "An error occurred while updating the coder",
-      error: error.message,
+      message: error.message || "An error occurred while updating the coder",
     });
   }
 };
