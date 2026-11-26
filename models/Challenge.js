@@ -73,6 +73,9 @@ const TestInputSchema = new Schema(
 
 const TestSchema = new Schema(
   {
+    weight: {
+      type: Number,
+    },
     inputs: {
       type: [TestInputSchema],
       required: true,
@@ -98,6 +101,7 @@ const ChallengeSchema = new Schema(
       required: true,
       trim: true,
     },
+    manager: { type: ObjectId, ref: "Manager" },
     category: {
       type: String,
       required: true,

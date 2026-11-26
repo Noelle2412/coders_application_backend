@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import { connectDB } from "./db/db.js";
+import { seedDatabase } from "./db/seed.js";
 import codersRouters from "./routers/codersRouters.js";
 import managersRouters from "./routers/managersRouters.js";
 import challengesRouters from "./routers/challengesRouters.js";
@@ -29,7 +30,8 @@ app.use("/stats", statsRouters);
 const PORT = process.env.PORT;
 
 connectDB()
-  .then(() => {
+  .then(async () => {
+    await seedDatabase();
     app.listen(PORT, () => {
       console.log(`Server is running on http://localhost:${PORT}`);
     });
