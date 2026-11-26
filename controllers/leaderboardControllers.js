@@ -37,10 +37,3 @@ export const getTopCoders = async (req, res) => {
     });
   }
 };
-    res.status(500).json({
-      status: "error",
-      message: "An error occurred while retrieving the top coders",
-      error: error.message,
-    });
-  }
-};
