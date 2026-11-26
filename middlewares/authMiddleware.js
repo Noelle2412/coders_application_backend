@@ -34,30 +34,26 @@ export const authorize = (allowedRoles = []) => {
       }
 
       // Inject user info into request object
+      let userRole = decoded.role ? decoded.role.toLowerCase() : null;
+
+      if (!userRole) {
+        const isCoder = await CoderModel.findById(decoded.id);
+        if (isCoder) {
+          userRole = "coder";
+        } else {
+          const isManager = await ManagerModel.findById(decoded.id);
+          if (isManager) userRole = "manager";
+        }
+      }
+
       req.user = {
         id: decoded.id,
         email: decoded.email,
-        role: decoded.role || null,
+        role: userRole,
       };
 
       // If specific roles are required, verify role
       if (rolesArray.length > 0) {
-        let userRole = decoded.role ? decoded.role.toLowerCase() : null;
-
-        // If role was not encoded in token, resolve from database
-        if (!userRole) {
-          const isCoder = await CoderModel.findById(decoded.id);
-          if (isCoder) {
-            userRole = "coder";
-          } else {
-            const isManager = await ManagerModel.findById(decoded.id);
-            if (isManager) userRole = "manager";
-          }
-          if (userRole) {
-            req.user.role = userRole;
-          }
-        }
-
         if (!userRole || !rolesArray.includes(userRole)) {
           return res.status(403).json({
             status: "fail",

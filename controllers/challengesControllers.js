@@ -1,9 +1,20 @@
 import { ChallengeModel } from "../models/Challenge.js";
 import { SubmissionModel } from "../models/Submission.js";
+import {
+  listChallengesService,
+  getChallengeByIdService,
+  getAllCategoriesService,
+} from "../services/challengesService.js";
 
 export const createChallenge = async (req, res) => {
   try {
-    const challenge = await ChallengeModel.create(req.body);
+    const managerId = req.user?.id || req.body.manager;
+
+    const challenge = await ChallengeModel.create({
+      ...req.body,
+      ...(managerId && { manager: managerId }),
+    });
+
     res.status(201).json({
       status: "success",
       message: "Challenge created successfully",
@@ -20,28 +31,23 @@ export const createChallenge = async (req, res) => {
 
 export const getAllChallenges = async (req, res) => {
   try {
-    const filter = {};
-    if (req.query.category) {
-      filter.category = req.query.category;
-    }
-    const challenges = await ChallengeModel.find(filter);
+    const challenges = await listChallengesService(req.user, req.query);
     res.status(200).json({
       status: "success",
       message: "Challenges retrieved successfully",
       data: challenges,
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(error.statusCode || 500).json({
       status: "error",
-      message: "An error occurred while retrieving challenges",
-      error: error.message,
+      message: error.message || "An error occurred while retrieving challenges",
     });
   }
 };
 
 export const getChallengeById = async (req, res) => {
   try {
-    const challenge = await ChallengeModel.findById(req.params.id);
+    const challenge = await getChallengeByIdService(req.params.id, req.user);
     if (!challenge) {
       return res.status(404).json({
         status: "error",
@@ -54,10 +60,9 @@ export const getChallengeById = async (req, res) => {
       data: challenge,
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(error.statusCode || 500).json({
       status: "error",
-      message: "An error occurred while retrieving the challenge",
-      error: error.message,
+      message: error.message || "An error occurred while retrieving the challenge",
     });
   }
 };
@@ -88,7 +93,7 @@ export const deleteChallengeById = async (req, res) => {
 
 export const getAllCategories = async (req, res) => {
   try {
-    const categories = await ChallengeModel.distinct("category");
+    const categories = await getAllCategoriesService();
     res.status(200).json({
       status: "success",
       message: "Categories retrieved successfully",
