@@ -2,8 +2,7 @@ import { ChallengeModel } from "../models/Challenge.js";
 import { SubmissionModel } from "../models/Submission.js";
 import { CoderModel } from "../models/Coder.js";
 
-const CODE_RUNNER_URL =
-  process.env.CODE_RUNNER_URL || "https://runlang-v1.onrender.com/run";
+const CODE_RUNNER_URL = process.env.CODE_RUNNER_URL;
 
 /**
  * Service to grade a challenge submission.
@@ -17,7 +16,12 @@ const CODE_RUNNER_URL =
  * 6. If failed, score = 0, passed = false.
  * 7. Persists submission in SubmissionModel.
  */
-export const gradeSubmissionService = async ({ coderId, challengeId, lang, code }) => {
+export const gradeSubmissionService = async ({
+  coderId,
+  challengeId,
+  lang,
+  code,
+}) => {
   const challenge = await ChallengeModel.findById(challengeId);
   if (!challenge) {
     const error = new Error("Challenge not found");
@@ -34,7 +38,7 @@ export const gradeSubmissionService = async ({ coderId, challengeId, lang, code 
 
   if (alreadySolved) {
     const error = new Error("Challenge has already been solved by this coder.");
-    error.statusCode = 400;
+    error.statusCode = 409;
     throw error;
   }
 
@@ -75,7 +79,9 @@ export const gradeSubmissionService = async ({ coderId, challengeId, lang, code 
     if (!response.ok) {
       const errText = await response.text();
       console.error(`[CodeRunner Error ${response.status}]:`, errText);
-      const error = new Error(`Code runner error: ${errText || response.statusText}`);
+      const error = new Error(
+        `Code runner error: ${errText || response.statusText}`,
+      );
       error.statusCode = 502;
       throw error;
     }
@@ -84,7 +90,9 @@ export const gradeSubmissionService = async ({ coderId, challengeId, lang, code 
   } catch (err) {
     if (err.statusCode) throw err;
     console.error("[CodeRunner Fetch Error]:", err.message);
-    const error = new Error(`Failed to communicate with code runner: ${err.message}`);
+    const error = new Error(
+      `Failed to communicate with code runner: ${err.message}`,
+    );
     error.statusCode = 502;
     throw error;
   }
@@ -95,9 +103,11 @@ export const gradeSubmissionService = async ({ coderId, challengeId, lang, code 
   let calculatedScore = 0;
   if (isPassed) {
     calculatedScore = challenge.tests.reduce((sum, t) => {
-      const weight = t.weight !== undefined ? t.weight : 1 / challenge.tests.length;
-      return sum + Math.round(weight * 100);
+      const weight =
+        t.weight !== undefined ? t.weight : 1 / challenge.tests.length;
+      return sum + weight * 100;
     }, 0);
+    calculatedScore = Math.round(calculatedScore);
   }
 
   // Create submission record

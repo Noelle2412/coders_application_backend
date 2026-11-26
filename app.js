@@ -27,6 +27,22 @@ app.use("/challenges", challengesRouters);
 app.use("/leaderboard", leaderboardRouters);
 app.use("/stats", statsRouters);
 
+// Global Error Handler for Mongoose CastError and other unhandled errors
+app.use((err, req, res, next) => {
+  if (err.name === "CastError") {
+    return res.status(400).json({
+      status: "fail",
+      message: `Invalid ID format for value '${err.value}'.`,
+    });
+  }
+
+  const statusCode = err.statusCode || 500;
+  return res.status(statusCode).json({
+    status: "error",
+    message: err.message || "An unexpected error occurred.",
+  });
+});
+
 const PORT = process.env.PORT;
 
 connectDB()

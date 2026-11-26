@@ -20,7 +20,13 @@ export const getLeaderboard = async (req, res) => {
 
 export const getTopCoders = async (req, res) => {
   try {
-    const K = req.query.K ? parseInt(req.query.K, 10) : 3;
+    const rawK =
+      req.validatedQuery?.k ??
+      req.validatedQuery?.K ??
+      req.query?.k ??
+      req.query?.K ??
+      3;
+    const K = parseInt(rawK, 10) || 3;
 
     const topCoders = await getLeaderboardService(K);
 

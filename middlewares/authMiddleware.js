@@ -1,6 +1,23 @@
 import { verifyToken } from "../utils/emailService.js";
 import { CoderModel } from "../models/Coder.js";
 import { ManagerModel } from "../models/Manager.js";
+import mongoose from "mongoose";
+
+/**
+ * Middleware validating that req.params.id is a valid MongoDB ObjectId.
+ */
+export const validateObjectId = (paramName = "id") => {
+  return (req, res, next) => {
+    const id = req.params[paramName];
+    if (id && !mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        status: "fail",
+        message: `Invalid ID format for parameter '${paramName}'.`,
+      });
+    }
+    next();
+  };
+};
 
 /**
  * Creates an authentication and authorization middleware.
@@ -77,6 +94,28 @@ export const authorize = (allowedRoles = []) => {
       });
     }
   };
+};
+
+/**
+ * Middleware ensuring a user can only perform an operation on their own account.
+ * Compares req.user.id with req.params.id.
+ */
+export const ensureSelf = (req, res, next) => {
+  if (!req.user || !req.user.id) {
+    return res.status(401).json({
+      status: "fail",
+      message: "Authentication required.",
+    });
+  }
+
+  if (req.user.id !== req.params.id) {
+    return res.status(403).json({
+      status: "fail",
+      message: "Access forbidden: you can only manage your own account.",
+    });
+  }
+
+  next();
 };
 
 export default authorize;

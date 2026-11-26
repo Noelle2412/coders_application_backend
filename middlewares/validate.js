@@ -15,7 +15,11 @@ export const validate = (schema, property = "body") => {
       });
     }
 
-    req[property] = value;
+    if (property === "query") {
+      req.validatedQuery = value;
+    } else {
+      req[property] = value;
+    }
     next();
   };
 };

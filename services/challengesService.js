@@ -111,6 +111,9 @@ export const enhanceChallengeData = async (challenges, user) => {
       }
     }
 
+    // Do not expose test cases in challenge listings or details
+    delete doc.tests;
+
     return doc;
   });
 

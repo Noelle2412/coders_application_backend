@@ -35,6 +35,7 @@ export const challengeSchema = Joi.object({
   tests: Joi.array()
     .items(
       Joi.object({
+        weight: Joi.number().min(0).max(1).optional(),
         inputs: Joi.array()
           .items(
             Joi.object({

@@ -69,14 +69,13 @@ const getTransporter = async () => {
 };
 
 export const sendVerificationEmail = async ({ to, firstName, token }) => {
-  const baseUrl =
-    process.env.BASE_URL || `http://localhost:${process.env.PORT || 3000}`;
+  const baseUrl = process.env.BASE_URL;
   const verificationLink = `${baseUrl}/verify?token=${token}`;
 
   const transporter = await getTransporter();
 
   const mailOptions = {
-    from: process.env.EMAIL_FROM || '"Coders App" <no-reply@codersapp.com>',
+    from: process.env.EMAIL_FROM,
     to,
     subject: "Verify Your Account - Coders App",
     html: `

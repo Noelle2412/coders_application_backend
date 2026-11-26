@@ -10,7 +10,7 @@ import { SubmissionModel } from "../models/Submission.js";
 export const getLeaderboardService = async (limit = null) => {
   // 1. Fetch coders sorted by score descending
   let query = CoderModel.find()
-    .select("firstName lastName email avatar score")
+    .select("firstName lastName avatar score")
     .sort({ score: -1 });
 
   if (limit && Number.isInteger(limit) && limit > 0) {
@@ -59,7 +59,6 @@ export const getLeaderboardService = async (limit = null) => {
     firstName: coder.firstName,
     lastName: coder.lastName,
     name: `${coder.firstName} ${coder.lastName}`.trim(),
-    email: coder.email,
     avatar: coder.avatar,
     score: coder.score || 0,
     solved_challenges: solvedMap.get(coder._id.toString()) || 0,
