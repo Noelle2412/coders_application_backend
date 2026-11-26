@@ -1,4 +1,5 @@
 import { ChallengeModel } from "../models/Challenge.js";
+import { SubmissionModel } from "../models/Submission.js";
 
 export const createChallenge = async (req, res) => {
   try {
@@ -104,18 +105,42 @@ export const getAllCategories = async (req, res) => {
 
 export const submitChallenge = async (req, res) => {
   try {
-    const { lang, code, challenge_id } = req.body;
-    const challenge = await ChallengeModel.findById(challenge_id);
+    const challengeId = req.params.id || req.body.challenge_id;
+    const { lang, code } = req.body;
+
+    const challenge = await ChallengeModel.findById(challengeId);
     if (!challenge) {
       return res.status(404).json({
         status: "error",
         message: "Challenge not found",
       });
     }
-    // Simulation of test execution
-    res.status(200).json({
+
+    // Get coder id from authenticated user (req.user is injected by authMiddleware)
+    const coderId = req.user?.id || req.body.coder_id;
+
+    if (!coderId) {
+      return res.status(401).json({
+        status: "error",
+        message: "User authentication required to submit a challenge",
+      });
+    }
+
+    // Create and save submission record
+    const submission = await SubmissionModel.create({
+      coder: coderId,
+      challenge: challenge._id,
+      code,
+      language: lang,
+      passed: true, // Simulation of test execution
+      score: 100,
+      submittedAt: new Date(),
+    });
+
+    res.status(201).json({
       status: "success",
       message: "Challenge submitted successfully",
+      data: submission,
     });
   } catch (error) {
     res.status(500).json({
