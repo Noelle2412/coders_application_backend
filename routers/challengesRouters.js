@@ -11,14 +11,15 @@ import {
   getAllCategories,
   submitChallenge,
 } from "../controllers/challengesControllers.js";
+import { authorize } from "../middlewares/authMiddleware.js";
 
 const router = Router();
 
-router.post("/create", validateChallenge, createChallenge);
+router.post("/create", authorize(["Manager"]), validateChallenge, createChallenge);
 router.get("/", getAllChallenges);
 router.get("/categories", getAllCategories);
 router.get("/:id", getChallengeById);
-router.delete("/:id", deleteChallengeById);
-router.post("/:id/submission", validateChallengeSubmission, submitChallenge);
+router.delete("/:id", authorize(["Manager"]), deleteChallengeById);
+router.post("/:id/submission", authorize(["Coder"]), validateChallengeSubmission, submitChallenge);
 
 export default router;

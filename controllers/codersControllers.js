@@ -2,6 +2,7 @@ import bcrypt from "bcrypt";
 import { CoderModel } from "../models/Coder.js";
 import {
   generateVerificationToken,
+  generateAuthToken,
   sendVerificationEmail,
 } from "../utils/emailService.js";
 
@@ -84,12 +85,23 @@ export const codersLogin = async (req, res) => {
       });
     }
 
+    if (!coder.is_verified) {
+      return res.status(403).json({
+        status: "fail",
+        message:
+          "Please verify your email address before logging in. Check your inbox for the verification link.",
+      });
+    }
+
     const coderData = coder.toObject();
     delete coderData.password;
+
+    const token = generateAuthToken(coder, "Coder");
 
     return res.status(200).json({
       status: "success",
       message: "Coder logged in successfully",
+      token,
       data: coderData,
     });
   } catch (error) {

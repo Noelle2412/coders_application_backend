@@ -16,6 +16,17 @@ export const generateVerificationToken = (user, role) => {
   );
 };
 
+export const generateAuthToken = (user, role) => {
+  const payload = {
+    id: user._id.toString(),
+    email: user.email,
+  };
+  if (role) {
+    payload.role = role;
+  }
+  return jwt.sign(payload, JWT_SECRET, { expiresIn: "7d" });
+};
+
 export const verifyToken = (token) => {
   return jwt.verify(token, JWT_SECRET);
 };

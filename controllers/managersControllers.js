@@ -2,6 +2,7 @@ import bcrypt from "bcrypt";
 import { ManagerModel } from "../models/Manager.js";
 import {
   generateVerificationToken,
+  generateAuthToken,
   sendVerificationEmail,
 } from "../utils/emailService.js";
 
@@ -84,12 +85,23 @@ export const managersLogin = async (req, res) => {
       });
     }
 
+    if (!manager.is_verified) {
+      return res.status(403).json({
+        status: "fail",
+        message:
+          "Please verify your email address before logging in. Check your inbox for the verification link.",
+      });
+    }
+
     const managerData = manager.toObject();
     delete managerData.password;
+
+    const token = generateAuthToken(manager, "Manager");
 
     return res.status(200).json({
       status: "success",
       message: "Manager logged in successfully",
+      token,
       data: managerData,
     });
   } catch (error) {
